@@ -18,24 +18,32 @@ public class ServerThread extends Thread implements Runnable {
     @Override
     public void run() {
         try {
-            DataInputStream dataInputStream = new DataInputStream(socketInputStream);
-            DataOutputStream dataOutputStream = new DataOutputStream(socketOutputStream);
-            while (true) {
-                writeResponse("test");
-            }
+            writeResponse("./src/index.html");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }
     }
 
-    private void writeResponse(String s) throws Throwable {
+    private void writeResponse(String filePath) throws Throwable {
+        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socketOutputStream));
+        File file = new File(filePath);
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+
         String response = "HTTP/1.1 200 OK\r\n" +
                 "Server: EtryflyServer\r\n" +
                 "Content-Type: text/html\r\n" +
-                "Content-Length: " + s.length() + "\r\n" +
+                "Content-Length: " + file.length() + "\r\n" +
                 "Connection: close\r\n\r\n";
-        String result = response + s;
+        String result = response;
         socketOutputStream.write(result.getBytes());
         socketOutputStream.flush();
+
+        while (bufferedReader.ready()) {
+            String data = bufferedReader.readLine();
+            bufferedWriter.write(data);
+        }
+
+        bufferedWriter.flush();
+        bufferedReader.close();
     }
 }
